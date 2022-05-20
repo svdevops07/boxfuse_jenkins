@@ -1,0 +1,38 @@
+pipeline {
+    agent { label 'node2' }
+
+    stages {
+
+        stage('Git clone') {
+            steps {
+                git branch: 'main', url: 'https://github.com/svdevops07/boxfuse_jenkins.git'
+            }
+        }
+
+        stage('Build and push docker container to registry') {
+            steps {
+                sh 'docker build -t svdevops07/boxfuse_jenkins:0.1 .'
+                withDockerRegistry(credentialsId: 'dockerhub-token', url: 'https://index.docker.io/v1/') {
+                    sh 'docker push svdevops07/boxfuse_jenkins:0.1'
+            }
+        }
+
+        stage('Delete docker image locally') {
+
+        }
+    }
+
+    agent { docker { image 'svdevops07/boxfuse_jenkins:0.1' } }
+
+    stages {
+
+        stage('Build boxfuse') {
+            steps {
+                sh 'mvn package'
+            }
+        }
+    }
+
+    agent { label 'node2' }
+
+}
